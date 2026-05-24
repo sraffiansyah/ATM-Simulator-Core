@@ -1,6 +1,7 @@
 """
 Core ATM logic.
 Struktur Data: Stack (riwayat transaksi), Dictionary (data rekening)
+History transaksi disimpan ke JSON supaya persist setelah program ditutup.
 """
 
 import json
@@ -13,8 +14,8 @@ DATA_FILE = Path(__file__).parent / "accounts.json"
 # ─── Stack Implementation ─────────────────────────────────────────────────────
 
 class Stack:
-    def __init__(self):
-        self._data: list = []
+    def __init__(self, initial: list | None = None):
+        self._data: list = list(initial) if initial else []
 
     def push(self, item):       self._data.append(item)
     def pop(self):              return self._data.pop() if self._data else None
@@ -29,8 +30,10 @@ class Stack:
 class ATM:
     def __init__(self):
         self.accounts: dict        = self._load_accounts()
-        self.history:  Stack       = Stack()
         self.logged_in: str | None = None
+        # Stack di-init dari history JSON milik akun yang sedang login
+        # (di-load ulang saat login)
+        self.history: Stack        = Stack()
 
     # ── Persistence ──────────────────────────────────────────────────────────
 
@@ -46,13 +49,11 @@ class ATM:
 
     @staticmethod
     def _normalize_card(no_kartu: str) -> str:
-        """Hapus semua spasi dari nomor kartu — untuk perbandingan konsisten."""
         return no_kartu.replace(" ", "").replace("-", "").strip()
 
     # ── Lookup ───────────────────────────────────────────────────────────────
 
     def find_by_card(self, no_kartu: str) -> str | None:
-        """Cari no_rek berdasarkan no_kartu 16 digit. Return no_rek atau None."""
         target = self._normalize_card(no_kartu)
         for no_rek, data in self.accounts.items():
             if self._normalize_card(data.get("no_kartu", "")) == target:
@@ -73,12 +74,16 @@ class ATM:
         if self.accounts[no_rek]["pin"] != pin:
             return False, "PIN salah."
         self.logged_in = no_rek
+        # Load history dari JSON ke Stack (urutan lama → baru, push satu-satu)
+        saved = self.accounts[no_rek].get("history", [])
+        self.history = Stack(saved)     # _data = urutan lama→baru, to_list() balik jadi baru→lama
         self._record(f"LOGIN berhasil — rekening {no_rek}")
         return True, "Login berhasil."
 
     def logout(self):
         self._record(f"LOGOUT — rekening {self.logged_in}")
         self.logged_in = None
+        self.history   = Stack()        # reset stack di memori
 
     # ── Account Info ─────────────────────────────────────────────────────────
 
@@ -93,7 +98,6 @@ class ATM:
     def get_no_kartu(self, no_rek: str | None = None) -> str | None:
         key = no_rek or self.logged_in
         raw = self._normalize_card(self.accounts.get(key, {}).get("no_kartu", ""))
-        # Tampilan: XXXX XXXX XXXX XXXX
         return " ".join(raw[i:i+4] for i in range(0, len(raw), 4)) if raw else None
 
     # ── Transactions ─────────────────────────────────────────────────────────
@@ -109,8 +113,8 @@ class ATM:
         if jumlah > saldo:
             return False, "Saldo tidak mencukupi."
         self.accounts[self.logged_in]["saldo"] -= jumlah
-        self._save_accounts()
         self._record(f"TARIK  Rp{jumlah:,.0f}  | Sisa: Rp{self.accounts[self.logged_in]['saldo']:,.0f}")
+        self._save_accounts()
         return True, f"Berhasil tarik Rp{jumlah:,.0f}."
 
     def setor(self, jumlah: int) -> tuple[bool, str]:
@@ -119,15 +123,21 @@ class ATM:
         if jumlah <= 0:
             return False, "Jumlah harus lebih dari 0."
         self.accounts[self.logged_in]["saldo"] += jumlah
-        self._save_accounts()
         self._record(f"SETOR  Rp{jumlah:,.0f}  | Saldo: Rp{self.accounts[self.logged_in]['saldo']:,.0f}")
+        self._save_accounts()
         return True, f"Berhasil setor Rp{jumlah:,.0f}."
 
-    # ── History (Stack) ───────────────────────────────────────────────────────
+    # ── History (Stack + JSON) ────────────────────────────────────────────────
 
     def _record(self, keterangan: str):
+        """Push ke Stack dan langsung sync ke JSON."""
         waktu = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-        self.history.push({"waktu": waktu, "keterangan": keterangan})
+        entry = {"waktu": waktu, "keterangan": keterangan}
+        self.history.push(entry)
+        # Simpan Stack ke JSON (urutan _data = lama→baru, sesuai urutan push)
+        if self.logged_in:
+            self.accounts[self.logged_in]["history"] = self.history._data
+            self._save_accounts()
 
     def get_history(self) -> list[dict]:
-        return self.history.to_list()
+        return self.history.to_list()   # terbaru di atas
