@@ -105,7 +105,7 @@ def menu_dashboard(atm: ATM):
         else:
             print("  [!] Pilihan tidak valid.")
             pause()
-
+            
 
 # ─── Actions ──────────────────────────────────────────────────────────────────
 

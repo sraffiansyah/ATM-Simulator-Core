@@ -28,9 +28,9 @@ class Stack:
 
 class ATM:
     def __init__(self):
-        self.accounts: dict     = self._load_accounts()     # Dictionary utama
-        self.history:  Stack    = Stack()                   # Stack riwayat
-        self.logged_in: str | None = None                   # nomor rekening aktif
+        self.accounts: dict        = self._load_accounts()
+        self.history:  Stack       = Stack()
+        self.logged_in: str | None = None
 
     # ── Persistence ──────────────────────────────────────────────────────────
 
@@ -41,6 +41,29 @@ class ATM:
     def _save_accounts(self):
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(self.accounts, f, indent=4, ensure_ascii=False)
+
+    # ── Helpers ──────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _normalize_card(no_kartu: str) -> str:
+        """Hapus semua spasi dari nomor kartu — untuk perbandingan konsisten."""
+        return no_kartu.replace(" ", "").replace("-", "").strip()
+
+    # ── Lookup ───────────────────────────────────────────────────────────────
+
+    def find_by_card(self, no_kartu: str) -> str | None:
+        """Cari no_rek berdasarkan no_kartu 16 digit. Return no_rek atau None."""
+        target = self._normalize_card(no_kartu)
+        for no_rek, data in self.accounts.items():
+            if self._normalize_card(data.get("no_kartu", "")) == target:
+                return no_rek
+        return None
+
+    def account_exists(self, no_rek: str) -> bool:
+        return no_rek in self.accounts
+
+    def card_exists(self, no_kartu: str) -> bool:
+        return self.find_by_card(no_kartu) is not None
 
     # ── Auth ─────────────────────────────────────────────────────────────────
 
@@ -67,8 +90,11 @@ class ATM:
         key = no_rek or self.logged_in
         return self.accounts.get(key, {}).get("nama")
 
-    def account_exists(self, no_rek: str) -> bool:
-        return no_rek in self.accounts
+    def get_no_kartu(self, no_rek: str | None = None) -> str | None:
+        key = no_rek or self.logged_in
+        raw = self._normalize_card(self.accounts.get(key, {}).get("no_kartu", ""))
+        # Tampilan: XXXX XXXX XXXX XXXX
+        return " ".join(raw[i:i+4] for i in range(0, len(raw), 4)) if raw else None
 
     # ── Transactions ─────────────────────────────────────────────────────────
 
