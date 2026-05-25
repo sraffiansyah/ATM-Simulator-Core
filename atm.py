@@ -31,9 +31,7 @@ class ATM:
     def __init__(self):
         self.accounts: dict        = self._load_accounts()
         self.logged_in: str | None = None
-        # Stack di-init dari history JSON milik akun yang sedang login
-        # (di-load ulang saat login)
-        self.history: Stack        = Stack()
+        self.history:   Stack      = Stack()
 
     # ── Persistence ──────────────────────────────────────────────────────────
 
@@ -74,16 +72,16 @@ class ATM:
         if self.accounts[no_rek]["pin"] != pin:
             return False, "PIN salah."
         self.logged_in = no_rek
-        # Load history dari JSON ke Stack (urutan lama → baru, push satu-satu)
+
         saved = self.accounts[no_rek].get("history", [])
-        self.history = Stack(saved)     # _data = urutan lama→baru, to_list() balik jadi baru→lama
+        self.history = Stack(saved)
         self._record(f"LOGIN berhasil — rekening {no_rek}")
         return True, "Login berhasil."
 
     def logout(self):
         self._record(f"LOGOUT — rekening {self.logged_in}")
         self.logged_in = None
-        self.history   = Stack()        # reset stack di memori
+        self.history   = Stack()
 
     # ── Account Info ─────────────────────────────────────────────────────────
 
@@ -102,20 +100,26 @@ class ATM:
 
     # ── Transactions ─────────────────────────────────────────────────────────
 
-    def tarik(self, jumlah: int) -> tuple[bool, str]:
+    def tarik(self, jumlah: int, pecahan: int) -> tuple[bool, str]:
         if not self.logged_in:
             return False, "Belum login."
+        if pecahan not in (50_000, 100_000):
+            return False, "Pecahan tidak valid. Pilih 50.000 atau 100.000."
         if jumlah <= 0:
             return False, "Jumlah harus lebih dari 0."
-        if jumlah % 50_000 != 0:
-            return False, "Jumlah harus kelipatan Rp50.000."
+        if jumlah % pecahan != 0:
+            return False, f"Jumlah harus kelipatan Rp{pecahan:,.0f}."
         saldo = self.accounts[self.logged_in]["saldo"]
         if jumlah > saldo:
             return False, "Saldo tidak mencukupi."
+        lembar = jumlah // pecahan
         self.accounts[self.logged_in]["saldo"] -= jumlah
-        self._record(f"TARIK  Rp{jumlah:,.0f}  | Sisa: Rp{self.accounts[self.logged_in]['saldo']:,.0f}")
+        self._record(
+            f"TARIK  Rp{jumlah:,.0f}  ({lembar} lembar @Rp{pecahan:,.0f})"
+            f"  | Sisa: Rp{self.accounts[self.logged_in]['saldo']:,.0f}"
+        )
         self._save_accounts()
-        return True, f"Berhasil tarik Rp{jumlah:,.0f}."
+        return True, f"Berhasil tarik Rp{jumlah:,.0f} ({lembar} lembar @Rp{pecahan:,.0f})."
 
     def setor(self, jumlah: int) -> tuple[bool, str]:
         if not self.logged_in:
@@ -127,17 +131,54 @@ class ATM:
         self._save_accounts()
         return True, f"Berhasil setor Rp{jumlah:,.0f}."
 
+    def transfer(self, no_rek_tujuan: str, jumlah: int) -> tuple[bool, str]:
+        if not self.logged_in:
+            return False, "Belum login."
+        if no_rek_tujuan == self.logged_in:
+            return False, "Tidak bisa transfer ke rekening sendiri."
+        if no_rek_tujuan not in self.accounts:
+            return False, "Nomor rekening tujuan tidak ditemukan."
+        if jumlah <= 0:
+            return False, "Jumlah harus lebih dari 0."
+        if jumlah % 1_000 != 0:
+            return False, "Jumlah harus kelipatan Rp1.000."
+        saldo = self.accounts[self.logged_in]["saldo"]
+        if jumlah > saldo:
+            return False, "Saldo tidak mencukupi."
+
+        nama_tujuan = self.accounts[no_rek_tujuan]["nama"]
+        self.accounts[self.logged_in]["saldo"]    -= jumlah
+        self.accounts[no_rek_tujuan]["saldo"]     += jumlah
+
+        self._record(
+            f"TRANSFER  Rp{jumlah:,.0f}  → {nama_tujuan} ({no_rek_tujuan})"
+            f"  | Sisa: Rp{self.accounts[self.logged_in]['saldo']:,.0f}"
+        )
+
+        # Catat juga di history penerima (langsung ke JSON, bukan Stack aktif)
+        waktu = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+        entry_masuk = {
+            "waktu": waktu,
+            "keterangan": (
+                f"MASUK    Rp{jumlah:,.0f}  ← {self.get_nama()} ({self.logged_in})"
+                f"  | Saldo: Rp{self.accounts[no_rek_tujuan]['saldo']:,.0f}"
+            )
+        }
+        self.accounts[no_rek_tujuan].setdefault("history", []).append(entry_masuk)
+        self._save_accounts()
+        return True, f"Transfer Rp{jumlah:,.0f} ke {nama_tujuan} berhasil."
+
     # ── History (Stack + JSON) ────────────────────────────────────────────────
 
     def _record(self, keterangan: str):
-        """Push ke Stack dan langsung sync ke JSON."""
+
         waktu = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
         entry = {"waktu": waktu, "keterangan": keterangan}
         self.history.push(entry)
-        # Simpan Stack ke JSON (urutan _data = lama→baru, sesuai urutan push)
+
         if self.logged_in:
             self.accounts[self.logged_in]["history"] = self.history._data
             self._save_accounts()
 
     def get_history(self) -> list[dict]:
-        return self.history.to_list()   # terbaru di atas
+        return self.history.to_list()

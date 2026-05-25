@@ -34,7 +34,7 @@ def fmt_rp(amount: int) -> str:
 # ─── Menu Screens ─────────────────────────────────────────────────────────────
 
 def menu_utama(atm: ATM):
-    """Menu awal sebelum login."""
+
     while True:
         clear()
         header()
@@ -58,7 +58,7 @@ def menu_utama(atm: ATM):
 
 
 def menu_login(atm: ATM):
-    """Form login rekening."""
+
     clear()
     header("LOGIN REKENING")
     no_rek = input("  No. Rekening : ").strip()
@@ -75,37 +75,35 @@ def menu_login(atm: ATM):
 
 
 def menu_dashboard(atm: ATM):
-    """Dashboard setelah login berhasil."""
+
     while True:
         clear()
         header("DASHBOARD")
-        nama  = atm.get_nama()
-        saldo = atm.get_saldo()
-        print(f"  Nama  : {nama}")
-        print(f"  Saldo : {fmt_rp(saldo)}")
+        print(f"  Nama  : {atm.get_nama()}")
+        print(f"  Saldo : {fmt_rp(atm.get_saldo())}")
         divider()
         print("  1. Tarik Uang")
         print("  2. Setor Uang")
-        print("  3. Riwayat Transaksi")
+        print("  3. Transfer")
+        print("  4. Riwayat Transaksi")
         print("  0. Logout")
         divider()
         pilihan = input("  Pilih: ").strip()
 
-        if pilihan == "1":
-            aksi_tarik(atm)
-        elif pilihan == "2":
-            aksi_setor(atm)
-        elif pilihan == "3":
-            aksi_riwayat(atm)
-        elif pilihan == "0":
-            atm.logout()
-            print("\n  Logout berhasil.")
-            pause()
-            break
-        else:
-            print("  [!] Pilihan tidak valid.")
-            pause()
-            
+        match pilihan:
+            case "1": aksi_tarik(atm)
+            case "2": aksi_setor(atm)
+            case "3": aksi_transfer(atm)
+            case "4": aksi_riwayat(atm)
+            case "0":
+                atm.logout()
+                print("\n  Logout berhasil.")
+                pause()
+                break
+            case _:
+                print("  [!] Pilihan tidak valid.")
+                pause()
+
 
 # ─── Actions ──────────────────────────────────────────────────────────────────
 
@@ -113,8 +111,27 @@ def aksi_tarik(atm: ATM):
     clear()
     header("TARIK UANG")
     print(f"  Saldo saat ini: {fmt_rp(atm.get_saldo())}")
-    print("  (Kelipatan Rp50.000)")
     divider()
+
+    # Pilih pecahan
+    print("  Pilih pecahan:")
+    print("  1. Rp50.000")
+    print("  2. Rp100.000")
+    divider()
+    pilihan_pecahan = input("  Pilih: ").strip()
+
+    if pilihan_pecahan == "1":
+        pecahan = 50_000
+    elif pilihan_pecahan == "2":
+        pecahan = 100_000
+    else:
+        print("  [!] Pilihan tidak valid.")
+        pause()
+        return
+
+    print(f"\n  Pecahan: Rp{pecahan:,.0f} | Masukkan kelipatan Rp{pecahan:,.0f}")
+    divider()
+
     try:
         jumlah = int(input("  Jumlah tarik : Rp").replace(".", "").strip())
     except ValueError:
@@ -122,7 +139,7 @@ def aksi_tarik(atm: ATM):
         pause()
         return
 
-    ok, pesan = atm.tarik(jumlah)
+    ok, pesan = atm.tarik(jumlah, pecahan)
     print(f"\n  {'✓' if ok else '✗'} {pesan}")
     if ok:
         print(f"  Saldo sekarang: {fmt_rp(atm.get_saldo())}")
@@ -148,6 +165,50 @@ def aksi_setor(atm: ATM):
     pause()
 
 
+def aksi_transfer(atm: ATM):
+    clear()
+    header("TRANSFER")
+    print(f"  Saldo saat ini: {fmt_rp(atm.get_saldo())}")
+    divider()
+
+    no_tujuan = input("  No. Rekening Tujuan : ").strip()
+
+    # Preview nama penerima sebelum konfirmasi
+    if not atm.account_exists(no_tujuan):
+        print("\n  ✗ Nomor rekening tujuan tidak ditemukan.")
+        pause()
+        return
+
+    nama_tujuan = atm.get_nama(no_tujuan)
+    print(f"  Nama Penerima        : {nama_tujuan}")
+    divider()
+
+    try:
+        jumlah = int(input("  Jumlah transfer : Rp").replace(".", "").strip())
+    except ValueError:
+        print("  [!] Input tidak valid.")
+        pause()
+        return
+
+    # Konfirmasi sebelum transfer
+    print(f"\n  ┌─ Konfirmasi Transfer ───────────────┐")
+    print(f"  │  Ke     : {nama_tujuan} ({no_tujuan})")
+    print(f"  │  Jumlah : {fmt_rp(jumlah)}")
+    print(f"  └─────────────────────────────────────┘")
+    konfirmasi = input("\n  Lanjutkan? (y/n): ").strip().lower()
+
+    if konfirmasi != "y":
+        print("  Transfer dibatalkan.")
+        pause()
+        return
+
+    ok, pesan = atm.transfer(no_tujuan, jumlah)
+    print(f"\n  {'✓' if ok else '✗'} {pesan}")
+    if ok:
+        print(f"  Saldo sekarang: {fmt_rp(atm.get_saldo())}")
+    pause()
+
+
 def aksi_riwayat(atm: ATM):
     clear()
     header("RIWAYAT TRANSAKSI")
@@ -166,7 +227,7 @@ def aksi_riwayat(atm: ATM):
 
 
 def aksi_scan_saldo(atm: ATM):
-    """Buka kamera dan scan kartu untuk cek saldo tanpa login."""
+
     clear()
     header("CEK SALDO — SCAN KARTU")
     print("  Kamera akan terbuka.")
@@ -176,7 +237,7 @@ def aksi_scan_saldo(atm: ATM):
     divider()
     input("  Tekan Enter untuk membuka kamera...")
 
-    # Import di sini supaya app tetap jalan walau OpenCV tidak terinstall
+
     try:
         from scanner import scan_card
     except ImportError as e:
