@@ -24,7 +24,7 @@ OCR_CFG = r"--oem 3 --psm 11 -c tessedit_char_whitelist=0123456789"
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _draw_overlay(frame: np.ndarray, scan_rect: tuple, status: str,
-                  found_kartu: str | None, saldo_info: str | None):
+                    found_kartu: str | None, saldo_info: str | None):
     h, w = frame.shape[:2]
     x, y, rw, rh = scan_rect
 

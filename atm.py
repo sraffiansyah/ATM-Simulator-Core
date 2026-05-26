@@ -72,7 +72,6 @@ class ATM:
         if self.accounts[no_rek]["pin"] != pin:
             return False, "PIN salah."
         self.logged_in = no_rek
-
         saved = self.accounts[no_rek].get("history", [])
         self.history = Stack(saved)
         self._record(f"LOGIN berhasil — rekening {no_rek}")
@@ -126,6 +125,8 @@ class ATM:
             return False, "Belum login."
         if jumlah <= 0:
             return False, "Jumlah harus lebih dari 0."
+        if jumlah % 50_000 != 0:
+            return False, "Jumlah harus kelipatan Rp50.000."
         self.accounts[self.logged_in]["saldo"] += jumlah
         self._record(f"SETOR  Rp{jumlah:,.0f}  | Saldo: Rp{self.accounts[self.logged_in]['saldo']:,.0f}")
         self._save_accounts()
@@ -138,10 +139,8 @@ class ATM:
             return False, "Tidak bisa transfer ke rekening sendiri."
         if no_rek_tujuan not in self.accounts:
             return False, "Nomor rekening tujuan tidak ditemukan."
-        if jumlah <= 0:
-            return False, "Jumlah harus lebih dari 0."
-        if jumlah % 1_000 != 0:
-            return False, "Jumlah harus kelipatan Rp1.000."
+        if jumlah < 10_000:
+            return False, "Jumlah minimal transfer Rp10.000."
         saldo = self.accounts[self.logged_in]["saldo"]
         if jumlah > saldo:
             return False, "Saldo tidak mencukupi."
@@ -171,11 +170,9 @@ class ATM:
     # ── History (Stack + JSON) ────────────────────────────────────────────────
 
     def _record(self, keterangan: str):
-
         waktu = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
         entry = {"waktu": waktu, "keterangan": keterangan}
         self.history.push(entry)
-
         if self.logged_in:
             self.accounts[self.logged_in]["history"] = self.history._data
             self._save_accounts()

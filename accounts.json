@@ -2,16 +2,54 @@
     "581635025": {
         "nama": "Vyy",
         "pin": "111111",
-        "saldo": 581800000,
+        "saldo": 582178000,
         "no_kartu": "5816350255816350",
-        "history": []
+        "history": [
+            {
+                "waktu": "26-05-2026 13:56:03",
+                "keterangan": "LOGIN berhasil — rekening 581635025"
+            },
+            {
+                "waktu": "26-05-2026 13:56:21",
+                "keterangan": "SETOR  Rp250,000  | Saldo: Rp582,250,000"
+            },
+            {
+                "waktu": "26-05-2026 14:40:33",
+                "keterangan": "LOGIN berhasil — rekening 581635025"
+            },
+            {
+                "waktu": "26-05-2026 14:45:02",
+                "keterangan": "TRANSFER  Rp12,000  → Siti Rahayu (987654321)  | Sisa: Rp582,238,000"
+            },
+            {
+                "waktu": "26-05-2026 14:51:54",
+                "keterangan": "TRANSFER  Rp60,000  → Siti Rahayu (987654321)  | Sisa: Rp582,178,000"
+            },
+            {
+                "waktu": "26-05-2026 14:58:01",
+                "keterangan": "LOGIN berhasil — rekening 581635025"
+            },
+            {
+                "waktu": "26-05-2026 14:59:45",
+                "keterangan": "LOGOUT — rekening 581635025"
+            }
+        ]
     },
     "987654321": {
         "nama": "Siti Rahayu",
         "pin": "654321",
-        "saldo": 20000000,
+        "saldo": 20272000,
         "no_kartu": "4123456789012345",
-        "history": []
+        "history": [
+            {
+                "waktu": "26-05-2026 14:45:02",
+                "keterangan": "MASUK    Rp12,000  ← Vyy (581635025)  | Saldo: Rp20,212,000"
+            },
+            {
+                "waktu": "26-05-2026 14:51:54",
+                "keterangan": "MASUK    Rp60,000  ← Vyy (581635025)  | Saldo: Rp20,272,000"
+            }
+        ]
     },
     "112233445": {
         "nama": "Andi Wijaya",
