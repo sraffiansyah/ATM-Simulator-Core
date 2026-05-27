@@ -1,5 +1,9 @@
 # 🏧 ATM Simulator
-> Tugas Project Struktur Data — Python
+
+[![Python](https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python)](https://atm-generator-by-vyyy.netlify.app)
+
+> 💻 **Console-Based Banking Simulation** | Built with Python, OOP & Computer Vision  
+>  **Frontend Companion:** [ATM Card Designer (Web)](https://atm-generator-by-vyyy.netlify.app/)
 
 ---
 
@@ -12,19 +16,33 @@
 
 ---
 
-## ✨ Fitur
+## ✨ Features
 
-- **Login Rekening** — autentikasi nomor rekening + PIN
-- **Tarik Uang** — validasi kelipatan Rp50.000 & saldo cukup
-- **Setor Uang** — menambah saldo rekening
-- **Riwayat Transaksi** — menggunakan Stack, tampil terbaru di atas
-- **Cek Saldo via Scan Kartu** — OCR kamera real-time (tanpa login!)
+- 🔐 **Secure Login System** – Account authentication with PIN verification
+- 💸 **Core Banking Operations** – Withdraw, Deposit, Transfer (with full validation)
+- 📜 **Transaction History** – LIFO tracking using a custom Stack implementation
+- 📷 **OCR Card Scanner** – Real-time camera capture to read card numbers & fetch balance (OpenCV + Tesseract)
+- 💾 **Persistent Storage** – Account data & history saved to JSON between sessions
+- 🖥️ **Clean CLI UI** – Structured menus, input validation, and formatted currency output
 
 ---
 
-## ⚙️ Instalasi
+## 🛠️ Tech Stack & Data Structures
 
-### 1. Install library Python
+| Component | Technology / Pattern |
+|-----------|----------------------|
+| **Language** | Python 3.8+ |
+| **Architecture** | OOP, Modular Design (`ATM`, `Stack` classes) |
+| **Data Structures** | `Dictionary` (O(1) account lookup), `Stack` (LIFO transaction history) |
+| **Persistence** | JSON file-based storage |
+| **Computer Vision** | OpenCV (`cv2`), `pytesseract` (OCR engine) |
+| **UI** | Terminal/CLI with formatted tables & input validation |
+
+---
+
+## ⚙️ Installation
+
+### 1. Installation library Python
 ```bash
 pip install -r requirements.txt
 ```
@@ -33,7 +51,7 @@ pip install -r requirements.txt
 
 **Windows:**
 - Download installer: https://github.com/UB-Mannheim/tesseract/wiki
-- Install, lalu tambahkan path ke environment variable, contoh:
+- Install, then add the path to the environment variable, for example:
   ```
   C:\Program Files\Tesseract-OCR
   ```
@@ -48,16 +66,16 @@ brew install tesseract
 sudo apt install tesseract-ocr
 ```
 
-### 3. Jalankan
+### 3. Running
 ```bash
 python main.py
 ```
 
 ---
 
-## 👤 Akun Demo
+## 👤 Demo Account
 
-| No. Rekening | PIN  | Nama          | Saldo Awal     |
+| Num. Account | PIN  | Name          | Beginning balance     |
 |-------------|------|---------------|----------------|
 | 1234567890  | 1234 | Budi Santoso  | Rp5.000.000    |
 | 0987654321  | 5678 | Siti Rahayu   | Rp12.500.000   |
@@ -65,29 +83,29 @@ python main.py
 
 ---
 
-## 📷 Cara Pakai Fitur Scan Kartu
+## 📷 How to Use the Card Scan Feature
 
-1. Pilih menu **"2. Cek Saldo (Scan Kartu)"** dari menu utama
-2. Jendela kamera akan terbuka
-3. Tunjukkan kartu (atau kertas bertuliskan nomor rekening) ke kamera
-4. Arahkan ke **kotak hijau (SCAN AREA)** di tengah layar
-5. Saldo akan otomatis muncul di layar kamera
-6. Tekan **Q** untuk menutup kamera
+1. Select the menu **"2. Check Balance (Scan Card)"** from the main menu
+2. The camera window will open
+3. Show the card (or paper with the account number on it) to the camera.
+4. Aim at the **green box (SCAN AREA)** in the center of the screen
+5. The balance will automatically appear on the camera screen.
+6. Press **Q** to close the camera
 
-> 💡 **Tips:** Untuk demo/testing, tulis nomor rekening dengan spidol besar di kertas putih, lalu tunjukkan ke kamera. OCR bekerja lebih baik di pencahayaan terang.
+> 💡 **Tip:** For demo/testing, write the account number with a large marker on a white sheet of paper and show it to the camera. OCR works better in bright lighting.
 
 ---
 
-## 🗂️ Tambah Akun Baru
+## 🗂️ Add New Account
 
-Edit file `accounts.json`, tambahkan entri baru:
+Edit file `accounts.json`, add new entry:
 
 ```json
 "9988776655": {
-    "nama": "Nama Kamu",
+    "name": "Your name",
     "pin": "0000",
-    "saldo": 1000000
-    "no_kartu": "5816350255816350",
+    "balance": 1000000
+    "card_number": "5816350255816350",
     "history": []
 }
 ```

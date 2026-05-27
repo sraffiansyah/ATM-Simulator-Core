@@ -54,7 +54,7 @@ class ATM:
     def find_by_card(self, no_kartu: str) -> str | None:
         target = self._normalize_card(no_kartu)
         for no_rek, data in self.accounts.items():
-            if self._normalize_card(data.get("no_kartu", "")) == target:
+            if self._normalize_card(data.get("card_number", "")) == target:
                 return no_rek
         return None
 
@@ -86,15 +86,15 @@ class ATM:
 
     def get_saldo(self, no_rek: str | None = None) -> int | None:
         key = no_rek or self.logged_in
-        return self.accounts.get(key, {}).get("saldo")
+        return self.accounts.get(key, {}).get("balance")
 
     def get_nama(self, no_rek: str | None = None) -> str | None:
         key = no_rek or self.logged_in
-        return self.accounts.get(key, {}).get("nama")
+        return self.accounts.get(key, {}).get("name")
 
     def get_no_kartu(self, no_rek: str | None = None) -> str | None:
         key = no_rek or self.logged_in
-        raw = self._normalize_card(self.accounts.get(key, {}).get("no_kartu", ""))
+        raw = self._normalize_card(self.accounts.get(key, {}).get("card_number", ""))
         return " ".join(raw[i:i+4] for i in range(0, len(raw), 4)) if raw else None
 
     # ── Transactions ─────────────────────────────────────────────────────────
@@ -108,14 +108,14 @@ class ATM:
             return False, "Jumlah harus lebih dari 0."
         if jumlah % pecahan != 0:
             return False, f"Jumlah harus kelipatan Rp{pecahan:,.0f}."
-        saldo = self.accounts[self.logged_in]["saldo"]
+        saldo = self.accounts[self.logged_in]["balance"]
         if jumlah > saldo:
             return False, "Saldo tidak mencukupi."
         lembar = jumlah // pecahan
-        self.accounts[self.logged_in]["saldo"] -= jumlah
+        self.accounts[self.logged_in]["balance"] -= jumlah
         self._record(
             f"TARIK  Rp{jumlah:,.0f}  ({lembar} lembar @Rp{pecahan:,.0f})"
-            f"  | Sisa: Rp{self.accounts[self.logged_in]['saldo']:,.0f}"
+            f"  | Sisa: Rp{self.accounts[self.logged_in]['balance']:,.0f}"
         )
         self._save_accounts()
         return True, f"Berhasil tarik Rp{jumlah:,.0f} ({lembar} lembar @Rp{pecahan:,.0f})."
@@ -127,8 +127,8 @@ class ATM:
             return False, "Jumlah harus lebih dari 0."
         if jumlah % 50_000 != 0:
             return False, "Jumlah harus kelipatan Rp50.000."
-        self.accounts[self.logged_in]["saldo"] += jumlah
-        self._record(f"SETOR  Rp{jumlah:,.0f}  | Saldo: Rp{self.accounts[self.logged_in]['saldo']:,.0f}")
+        self.accounts[self.logged_in]["balance"] += jumlah
+        self._record(f"SETOR  Rp{jumlah:,.0f}  | Saldo: Rp{self.accounts[self.logged_in]['balance']:,.0f}")
         self._save_accounts()
         return True, f"Berhasil setor Rp{jumlah:,.0f}."
 
@@ -141,17 +141,17 @@ class ATM:
             return False, "Nomor rekening tujuan tidak ditemukan."
         if jumlah < 10_000:
             return False, "Jumlah minimal transfer Rp10.000."
-        saldo = self.accounts[self.logged_in]["saldo"]
+        saldo = self.accounts[self.logged_in]["balance"]
         if jumlah > saldo:
             return False, "Saldo tidak mencukupi."
 
-        nama_tujuan = self.accounts[no_rek_tujuan]["nama"]
-        self.accounts[self.logged_in]["saldo"]    -= jumlah
-        self.accounts[no_rek_tujuan]["saldo"]     += jumlah
+        nama_tujuan = self.accounts[no_rek_tujuan]["name"]
+        self.accounts[self.logged_in]["balance"]    -= jumlah
+        self.accounts[no_rek_tujuan]["balance"]     += jumlah
 
         self._record(
             f"TRANSFER  Rp{jumlah:,.0f}  → {nama_tujuan} ({no_rek_tujuan})"
-            f"  | Sisa: Rp{self.accounts[self.logged_in]['saldo']:,.0f}"
+            f"  | Sisa: Rp{self.accounts[self.logged_in]['balance']:,.0f}"
         )
 
         # Catat juga di history penerima (langsung ke JSON, bukan Stack aktif)
@@ -160,7 +160,7 @@ class ATM:
             "waktu": waktu,
             "keterangan": (
                 f"MASUK    Rp{jumlah:,.0f}  ← {self.get_nama()} ({self.logged_in})"
-                f"  | Saldo: Rp{self.accounts[no_rek_tujuan]['saldo']:,.0f}"
+                f"  | Saldo: Rp{self.accounts[no_rek_tujuan]['balance']:,.0f}"
             )
         }
         self.accounts[no_rek_tujuan].setdefault("history", []).append(entry_masuk)

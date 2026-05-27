@@ -1,23 +1,23 @@
 {
-    "581635025": {
-        "nama": "Vyy",
-        "pin": "111111",
-        "saldo": 582178000,
-        "no_kartu": "5816350255816350",
+    "1234567890": {
+        "name": "Budi Santoso",
+        "pin": "123456",
+        "balance": 5000000,
+        "card_number": "1234567890123456",
         "history": []
     },
     "987654321": {
-        "nama": "Siti Rahayu",
+        "name": "Siti Rahayu",
         "pin": "654321",
-        "saldo": 20272000,
-        "no_kartu": "4123456789012345",
+        "balance": 12500000,
+        "card_number": "4123456789012345",
         "history": []
     },
     "112233445": {
-        "nama": "Andi Wijaya",
+        "name": "Andi Wijaya",
         "pin": "001122",
-        "saldo": 3750000,
-        "no_kartu": "5234567890123456",
+        "balance": 3750000,
+        "card_number": "5234567890123456",
         "history": []
     }
 }
