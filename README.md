@@ -87,5 +87,7 @@ Edit file `accounts.json`, tambahkan entri baru:
     "nama": "Nama Kamu",
     "pin": "0000",
     "saldo": 1000000
+    "no_kartu": "5816350255816350",
+    "history": []
 }
 ```
